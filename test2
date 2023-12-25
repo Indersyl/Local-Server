@@ -1,0 +1,91 @@
+const Pool = require("pg").Pool;
+const pool = new Pool({
+    user: "postgres",
+    host: "localhost",
+    database: "postgres",
+    password: "password",
+  port: 5432,
+});
+//get all doctor our database
+const getdoctor = async () => {
+  try {
+    return await new Promise(function (resolve, reject) {
+      pool.query("SELECT * FROM doctor", (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        if (results && results.rows) {
+          resolve(results.rows);
+        } else {
+          reject(new Error("No results found"));
+        }
+      });
+    });
+  } catch (error_1) {
+    console.error(error_1);
+    throw new Error("Internal server error");
+  }
+};
+//create a new doctor record in the databsse
+const createdoctor = (body) => {
+  return new Promise(function (resolve, reject) {
+    const { name, email } = body;
+    pool.query(
+      "INSERT INTO doctor (name, email) VALUES ($1, $2) RETURNING *",
+      [name, email],
+      (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        if (results && results.rows) {
+          resolve(
+            `A new doctor has been added: ${JSON.stringify(results.rows[0])}`
+          );
+        } else {
+          reject(new Error("No results found"));
+        }
+      }
+    );
+  });
+};
+//delete a doctor
+const deletedoctor = (id) => {
+  return new Promise(function (resolve, reject) {
+    pool.query(
+      "DELETE FROM doctor WHERE id = $1",
+      [id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        resolve(`doctor deleted with ID: ${id}`);
+      }
+    );
+  });
+};
+//update a doctor record
+const updatedoctor = (id, body) => {
+  return new Promise(function (resolve, reject) {
+    const { name, email } = body;
+    pool.query(
+      "UPDATE doctor SET name = $1, email = $2 WHERE id = $3 RETURNING *",
+      [name, email, id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        if (results && results.rows) {
+          resolve(`doctor updated: ${JSON.stringify(results.rows[0])}`);
+        } else {
+          reject(new Error("No results found"));
+        }
+      }
+    );
+  });
+};
+module.exports = {
+  getdoctor,
+  createdoctor,
+  deletedoctor,
+  updatedoctor
+};
